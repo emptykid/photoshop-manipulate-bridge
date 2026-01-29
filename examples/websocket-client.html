@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photoshop Bridge WebSocket Client</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #log {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+    }
+    .log-sent { color: #0066cc; }
+    .log-received { color: #00aa00; }
+    .log-error { color: #cc0000; }
+    .log-info { color: #666; }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <h1>Photoshop Bridge WebSocket Client</h1>
+  
+  <div class="container">
+    <h2>Connection</h2>
+    <input type="text" id="wsUrl" value="ws://localhost:8020" placeholder="WebSocket URL">
+    <button id="connectBtn" onclick="connect()">Connect</button>
+    <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+    <p>Status: <span id="status">Disconnected</span></p>
+    
+    <h2>Actions</h2>
+    <button onclick="sendPing()" id="pingBtn" disabled>Send Ping</button>
+    <button onclick="sendAlert()" id="alertBtn" disabled>Send Alert</button>
+    <button onclick="getDocumentInfo()" id="docInfoBtn" disabled>Get Document Info</button>
+    
+    <h3>Execute Custom JSX</h3>
+    <input type="text" id="jsxScript" placeholder="Enter JSX script (e.g., alert('Hello'))" value="alert('Hello from WebSocket')">
+    <button onclick="executeJSX()" id="executeBtn" disabled>Execute</button>
+    
+    <h2>Log</h2>
+    <button onclick="clearLog()">Clear Log</button>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    let ws = null;
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function updateStatus(status) {
+      document.getElementById('status').textContent = status;
+    }
+
+    function setButtonsEnabled(enabled) {
+      document.getElementById('pingBtn').disabled = !enabled;
+      document.getElementById('alertBtn').disabled = !enabled;
+      document.getElementById('docInfoBtn').disabled = !enabled;
+      document.getElementById('executeBtn').disabled = !enabled;
+      document.getElementById('disconnectBtn').disabled = !enabled;
+      document.getElementById('connectBtn').disabled = enabled;
+    }
+
+    function connect() {
+      const url = document.getElementById('wsUrl').value;
+      log(`Connecting to ${url}...`, 'info');
+      
+      try {
+        ws = new WebSocket(url);
+
+        ws.onopen = () => {
+          log('Connected!', 'info');
+          updateStatus('Connected');
+          setButtonsEnabled(true);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            log(`Received: ${JSON.stringify(data, null, 2)}`, 'received');
+          } catch (e) {
+            log(`Received: ${event.data}`, 'received');
+          }
+        };
+
+        ws.onerror = (error) => {
+          log(`Error: ${error}`, 'error');
+        };
+
+        ws.onclose = () => {
+          log('Disconnected', 'info');
+          updateStatus('Disconnected');
+          setButtonsEnabled(false);
+          ws = null;
+        };
+      } catch (error) {
+        log(`Connection error: ${error}`, 'error');
+      }
+    }
+
+    function disconnect() {
+      if (ws) {
+        ws.close();
+      }
+    }
+
+    function sendMessage(message) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const msg = JSON.stringify(message);
+        ws.send(msg);
+        log(`Sent: ${msg}`, 'sent');
+      } else {
+        log('Not connected!', 'error');
+      }
+    }
+
+    function sendPing() {
+      sendMessage({ action: 'ping' });
+    }
+
+    function sendAlert() {
+      sendMessage({
+        action: 'alert',
+        data: { message: 'Hello from WebSocket client!' }
+      });
+    }
+
+    function getDocumentInfo() {
+      sendMessage({
+        action: 'getDocumentInfo',
+        data: {}
+      });
+    }
+
+    function executeJSX() {
+      const script = document.getElementById('jsxScript').value;
+      sendMessage({
+        action: 'executeJSX',
+        data: { script }
+      });
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
