@@ -2,7 +2,13 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+**English** | [简体中文](README_zh.md)
+
+---
+
 A Photoshop Generator plugin that **starts an HTTP server inside Photoshop**. External programs can talk to and control Photoshop over HTTP/WebSocket—automate tasks, execute JSX, get document info, and more.
+
+![Sample](sample.png)
 
 ## What it does
 
