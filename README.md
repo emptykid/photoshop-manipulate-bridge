@@ -1,146 +1,146 @@
 # Photoshop Manipulate Bridge
 
-A Photoshop Generator plugin built with TypeScript and Vite.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+A Photoshop Generator plugin that **starts an HTTP server inside Photoshop**. External programs can talk to and control Photoshop over HTTP/WebSocket—automate tasks, execute JSX, get document info, and more.
+
+## What it does
+
+- **Runs inside Photoshop** as a Generator plugin
+- **Starts an HTTP server** (default port **8020**) when Photoshop launches
+- **Exposes HTTP + WebSocket APIs** so any external tool (scripts, apps, CLI) can:
+  - Execute JSX in Photoshop
+  - Get document/layer info
+  - Trigger actions and receive events
+  - Control Photoshop from the command line or another app
+
+Use it to build automation, integrations, or remote control from your own software.
 
 ## Prerequisites
 
-- Node.js 18+
-- Adobe Photoshop CC or later with Generator enabled
+- **Node.js 18+**
+- **Adobe Photoshop CC** or later, with **Generator** enabled  
+  (Preferences → Plug-ins → Enable Generator, then restart Photoshop)
 
-## Setup
+## Quick start
 
-1. Install dependencies:
+### 1. Install the plugin
+
+**Option A – Use the release installer (recommended)**
+
+- **macOS**: Run `release/photoshop-manipulate-bridge-*.pkg`  
+  Installs to: `/Library/Application Support/Adobe/Plug-Ins/CC/Generator/photoshop-manipulate-bridge`
+- **Windows**: Run `release/PhotoshopManipulateBridge-Setup-*.exe`  
+  Installs to: `%COMMONPROGRAMFILES%\Adobe\Plug-Ins\CC\Generator\photoshop-manipulate-bridge`
+
+**Option B – Build from source**
+
 ```bash
 npm install
-```
-
-2. Build the plugin:
-```bash
 npm run build
 ```
 
-This will:
-- Compile TypeScript to JavaScript
-- Bundle the code with Vite
-- Generate `dist/package.json` with required dependencies
-- Install production dependencies (`ws`) in `dist/node_modules/`
+Then copy the `dist/` folder (as `photoshop-manipulate-bridge`) into:
 
-**Note:** The `dist/` directory is a complete, standalone plugin package with all dependencies bundled.
+- **macOS**: `~/Library/Application Support/Adobe/Adobe Photoshop [Version]/Plug-ins/Generator/`
+- **Windows**: `%COMMONPROGRAMFILES%\Adobe\Plug-Ins\CC\Generator\`
 
-3. Enable Photoshop Generator:
-   - Open Photoshop
-   - Go to `Preferences > Plug-ins`
-   - Check "Enable Generator"
-   - Restart Photoshop
+### 2. Enable Generator and restart Photoshop
 
-4. Install the plugin:
-   - Copy or symlink the **entire project directory** (not just dist/) to Photoshop's Generator plugins folder:
-     - **macOS**: `~/Library/Application Support/Adobe/Adobe Photoshop [Version]/Plug-ins/Generator/`
-   - Or use the dist directory directly:
-     - Copy/symlink the `dist` folder to the Generator plugins directory
+Preferences → Plug-ins → check **Enable Generator** → restart Photoshop.
 
-## Development
+### 3. Use the HTTP API
 
-- **Development mode** (watch for changes):
+Once Photoshop is running with the plugin loaded, the server is available at **http://localhost:8020**.
+
 ```bash
-npm run dev
+# Check server status
+curl http://localhost:8020/status
+
+# Execute JSX (e.g. show alert)
+curl -X POST http://localhost:8020/execute \
+  -H "Content-Type: application/json" \
+  -d '{"script": "alert(\"Hello from HTTP\");"}'
 ```
 
-- **Type checking**:
-```bash
-npm run type-check
-```
+Open **http://localhost:8020** in a browser for a simple web dashboard.
 
-- **Linting**:
-```bash
-npm run lint
-```
+## API overview
 
-- **Build for production**:
-```bash
-npm run build
-```
+| Interface   | URL / protocol        | Use case                          |
+|------------|------------------------|-----------------------------------|
+| **HTTP**   | `http://localhost:8020` | REST-style calls from any client  |
+| **WebSocket** | `ws://localhost:8020` | Real-time two-way communication   |
 
-## Project Structure
+### HTTP endpoints
+
+| Method | Path     | Description        |
+|--------|----------|--------------------|
+| GET    | `/`      | Web dashboard      |
+| GET    | `/status`| Server status      |
+| POST   | `/execute` | Execute JSX or actions (JSON body) |
+
+### WebSocket messages
+
+- `ping` – test connection  
+- `alert` – show alert in Photoshop  
+- `executeJSX` – run JSX script  
+- `getDocumentInfo` – get document information  
+
+See the `examples/` directory for sample clients (HTTP, WebSocket, JSX).
+
+## Project structure
 
 ```
 photoshop-manipulate-bridge/
 ├── src/
-│   ├── index.ts           # Plugin entry point
-│   ├── generator.ts       # Generator API type definitions
+│   ├── index.ts        # Plugin entry, starts HTTP server
+│   ├── generator.ts    # Generator API types
+│   ├── server.ts       # HTTP + WebSocket server
 │   └── utils/
-│       └── logger.ts      # Logging utility
-├── dist/                  # Build output (standalone, no node_modules)
-│   ├── index.js          # Bundled plugin code (~120KB, includes ws)
-│   ├── index.js.map      # Source map
-│   └── package.json      # Plugin descriptor
-├── package.json           # NPM package config
-├── tsconfig.json
+│       └── logger.ts
+├── dist/               # Build output (after npm run build)
+├── examples/           # Sample clients and scripts
+├── scripts/            # Packaging (macOS pkg, Windows NSIS)
+├── release/            # Built installers (.pkg, .exe)
+├── package.json
 ├── vite.config.ts
-└── README.md
+└── tsconfig.json
 ```
 
-## Features
+## Development
 
-### WebSocket & HTTP Server
-
-The plugin automatically starts a server on port **8020** that provides:
-
-- **WebSocket interface** (`ws://localhost:8020`) - Real-time bidirectional communication
-- **HTTP API** (`http://localhost:8020`) - RESTful interface for external tools
-- **Web dashboard** - Visit `http://localhost:8020` in your browser
-
-### Generator Events
-
-The plugin listens to the following Photoshop events:
-
-- `imageChanged` - Fired when the image content changes
-- `currentDocumentChanged` - Fired when the active document changes
-- `generatorMenuChanged` - Fired when Generator menu is changed
-
-## API Reference
-
-### Server API
-
-#### HTTP Endpoints
-
-**GET /** - Web dashboard
-
-**GET /status** - Server status
 ```bash
-curl http://localhost:8020/status
+# Install dependencies
+npm install
+
+# Watch build
+npm run dev
+
+# Production build
+npm run build
+
+# Type check
+npm run type-check
+
+# Lint
+npm run lint
 ```
 
-**POST /execute** - Execute JSX or actions
-```bash
-# Send alert
-curl -X POST http://localhost:8020/execute \
-  -H "Content-Type: application/json" \
-  -d '{"action": "alert", "message": "Hello"}'
+## Packaging (build installers)
 
-# Execute JSX
-curl -X POST http://localhost:8020/execute \
-  -H "Content-Type: application/json" \
-  -d '{"script": "alert(\"Hello\");"}'
-```
+Installers are built from the `dist/` output and install the plugin into the Adobe Generator folder.
 
-#### WebSocket Actions
+| Platform | Command / script           | Output |
+|----------|----------------------------|--------|
+| **macOS** | `npm run pack:mac` or `./scripts/build-mac-pkg.sh` | `release/photoshop-manipulate-bridge-*.pkg` |
+| **Windows** | `scripts\build-win-installer.cmd` (or `npm run pack:win` with NSIS) | `release/PhotoshopManipulateBridge-Setup-*.exe` |
 
-- `ping` - Test connection
-- `alert` - Show alert in Photoshop
-- `executeJSX` - Execute JSX script
-- `getDocumentInfo` - Get document information
+- **macOS**: Uses system `pkgbuild`.  
+- **Windows**: Requires [NSIS](https://nsis.sourceforge.io/Download); run from Windows or use WSL/Git Bash with `makensis` in PATH.
 
-See `examples/` directory for client examples.
-
-### Generator Methods
-
-- `generator.onPhotoshopEvent(event, handler)` - Register event handler
-- `generator.addMenuItem(id, label, enabled, checked)` - Add menu item
-- `generator.evaluateJSXString(script)` - Execute JSX script
-- `generator.getDocumentInfo(documentId)` - Get document information
-- `generator.getLayerInfo(documentId, layerId)` - Get layer information
+Details: see [scripts/PACKAGING.md](scripts/PACKAGING.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)

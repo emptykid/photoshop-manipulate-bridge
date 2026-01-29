@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "pack:mac": "bash scripts/build-mac-pkg.sh",
+    "pack:win": "bash scripts/build-win-installer.sh"
   },
   "keywords": [
     "photoshop",
