@@ -147,6 +147,10 @@ npm run lint
 
 详细说明见 [scripts/PACKAGING.md](scripts/PACKAGING.md)。
 
+## 相关项目
+
+[PSFlow](https://psflow.io?utm_source=github&utm_medium=readme&utm_campaign=photoshop-manipulate-bridge)：Photoshop 画布延时录制插件。
+
 ## 许可证
 
 [MIT](LICENSE)

@@ -147,6 +147,10 @@ Installers are built from the `dist/` output and install the plugin into the Ado
 
 Details: see [scripts/PACKAGING.md](scripts/PACKAGING.md).
 
+## Related projects
+
+[PSFlow](https://psflow.io?utm_source=github&utm_medium=readme&utm_campaign=photoshop-manipulate-bridge) – record a timelapse of your Photoshop canvas.
+
 ## License
 
 [MIT](LICENSE)
